@@ -1,0 +1,74 @@
+"use client";
+
+import { useSearchParams } from "next/navigation";
+import { db } from "@/shared/firebaseConfig";
+import { doc, getDoc } from "firebase/firestore";
+import { useEffect, useState } from "react";
+
+export default function MaterialDetails() {
+  const params = useSearchParams();
+  const id = params.get("id");
+
+  const [material, setMaterial] = useState<any>(null);
+
+  useEffect(() => {
+    async function load() {
+      if (!id) return;
+      try {
+        const ref = doc(db, "materials", id);
+        const snap = await getDoc(ref);
+        if (snap.exists()) {
+          setMaterial(snap.data());
+        } else {
+          setMaterial("NOT_FOUND");
+        }
+      } catch (err) {
+        console.error("Error loading material:", err);
+        setMaterial("ERROR");
+      }
+    }
+
+    load();
+  }, [id]);
+
+  if (!material) return <p className="mt-10 text-center">Loading…</p>;
+  if (material === "NOT_FOUND")
+    return <p className="mt-10 text-center text-red-500">Material not found.</p>;
+  if (material === "ERROR")
+    return (
+      <p className="mt-10 text-center text-red-600">
+        Failed to load material. Check console.
+      </p>
+    );
+
+  return (
+    <div className="min-h-screen bg-[#FFF7E6] p-10">
+      <div className="bg-white rounded-2xl p-8 shadow-xl max-w-2xl mx-auto">
+        <h2 className="text-xl font-bold mb-4 text-orange-600">
+          {material.fittingType} – Details
+        </h2>
+
+        <div className="grid grid-cols-2 text-sm gap-2">
+          <p>
+            <b>Material ID:</b> {material.materialId}
+          </p>
+          <p>
+            <b>PO Number:</b> {material.purchaseOrderNumber}
+          </p>
+          <p>
+            <b>Batch:</b> {material.batchNumber}
+          </p>
+          <p>
+            <b>Gauge:</b> {material.boardGauge}
+          </p>
+          <p>
+            <b>Date of Manufacture:</b> {material.manufacturingDate}
+          </p>
+          <p>
+            <b>Expected Life:</b> {material.expectedLifeYears}
+          </p>
+        </div>
+      </div>
+    </div>
+  );
+}
