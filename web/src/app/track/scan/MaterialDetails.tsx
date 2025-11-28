@@ -4,6 +4,7 @@ import { useSearchParams } from "next/navigation";
 import { db } from "@/shared/firebaseConfig";
 import { doc, getDoc } from "firebase/firestore";
 import { useEffect, useState } from "react";
+import generateMaterialPdf from "./MaterialPdf";
 
 export default function MaterialDetails() {
   const params = useSearchParams();
@@ -14,11 +15,11 @@ export default function MaterialDetails() {
   useEffect(() => {
     async function load() {
       if (!id) return;
+
       try {
-        const ref = doc(db, "materials", id);
-        const snap = await getDoc(ref);
+        const snap = await getDoc(doc(db, "materials", id));
         if (snap.exists()) {
-          setMaterial(snap.data());
+          setMaterial({ id: snap.id, ...snap.data() });
         } else {
           setMaterial("NOT_FOUND");
         }
@@ -37,38 +38,86 @@ export default function MaterialDetails() {
   if (material === "ERROR")
     return (
       <p className="mt-10 text-center text-red-600">
-        Failed to load material. Check console.
+        Failed to load material.
       </p>
     );
 
   return (
     <div className="min-h-screen bg-[#FFF7E6] p-10">
-      <div className="bg-white rounded-2xl p-8 shadow-xl max-w-2xl mx-auto">
-        <h2 className="text-xl font-bold mb-4 text-orange-600">
-          {material.fittingType} – Details
+      <div className="bg-white rounded-2xl p-8 shadow-xl max-w-3xl mx-auto">
+        <h2 className="text-2xl font-bold mb-6 text-orange-600 text-center">
+          Material Detailed Report
         </h2>
 
-        <div className="grid grid-cols-2 text-sm gap-2">
-          <p>
-            <b>Material ID:</b> {material.materialId}
-          </p>
-          <p>
-            <b>PO Number:</b> {material.purchaseOrderNumber}
-          </p>
-          <p>
-            <b>Batch:</b> {material.batchNumber}
-          </p>
-          <p>
-            <b>Gauge:</b> {material.boardGauge}
-          </p>
-          <p>
-            <b>Date of Manufacture:</b> {material.manufacturingDate}
-          </p>
-          <p>
-            <b>Expected Life:</b> {material.expectedLifeYears}
-          </p>
+        {/* MAIN GRID */}
+        <div className="grid grid-cols-2 gap-4 text-sm">
+
+          {/* Core IDs */}
+          <Section title="Core Details" />
+          <Field label="Material ID" value={material.materialId} />
+          <Field label="Firestore Doc ID" value={material.id} />
+          <Field label="Manufacturer ID" value={material.manufacturerId} />
+          <Field label="Manufacturer Name" value={material.manufacturerName} />
+
+          {/* Technical Specification */}
+          <Section title="Technical Specification" />
+          <Field label="Fitting Type" value={material.fittingType} />
+          <Field label="Drawing Number" value={material.drawingNumber} />
+          <Field label="Material Spec" value={material.materialSpec} />
+          <Field label="Weight (kg)" value={material.weightKg} />
+          <Field label="Board Gauge" value={material.boardGauge} />
+          <Field label="Manufacturing Date" value={material.manufacturingDate} />
+          <Field label="Expected Life (years)" value={material.expectedLifeYears} />
+
+          {/* UDM Details */}
+          <Section title="UDM Purchase & Lot Data" />
+          <Field label="Purchase Order No" value={material.purchaseOrderNumber} />
+          <Field label="Batch Number" value={material.batchNumber} />
+          <Field label="Depot Code" value={material.depotCode} />
+          <Field label="Depot Entry Date" value={material.depotEntryDate} />
+          <Field label="UDM Lot Number" value={material.udmLotNumber} />
+          <Field label="Inspection Officer" value={material.inspectionOfficer} />
+
+          {/* TMS Lifecycle */}
+          <Section title="Track Mapping / TMS Lifecycle" />
+          <Field label="TMS Track ID" value={material.tmsTrackId} />
+          <Field label="GPS Location" value={material.gpsLocation} />
+          <Field label="Installation Status" value={material.installationStatus} />
+          <Field label="Dispatch Date" value={material.dispatchDate} />
+          <Field label="Warranty Expiry" value={material.warrantyExpiry} />
+          <Field label="Failure Count" value={material.failureCount} />
+          <Field label="Last Maintenance Date" value={material.lastMaintenanceDate} />
+
         </div>
+
+        {/* DOWNLOAD PDF BUTTON */}
+        <button
+          onClick={() => generateMaterialPdf(material)}
+          className="mt-6 w-full py-3 rounded-xl bg-orange-600 text-white font-semibold"
+        >
+          Download Report (PDF)
+        </button>
       </div>
     </div>
   );
 }
+
+/* UI Helpers */
+function Section({ title }: { title: string }) {
+  return (
+    <div className="col-span-2 mt-4 mb-1">
+      <h3 className="text-md font-semibold text-orange-700 border-b pb-1">
+        {title}
+      </h3>
+    </div>
+  );
+}
+
+function Field({ label, value }: { label: string; value: any }) {
+  return (
+    <p>
+      <b>{label}:</b> {value || "—"}
+    </p>
+  );
+}
+
