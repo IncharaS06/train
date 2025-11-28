@@ -1,12 +1,12 @@
 "use client";
 
 import { Suspense } from "react";
-import ScanClient from "./scan-client"; // Your component that uses useSearchParams
+import MaterialDetails from "./MaterialDetails";
 
-export default function Page() {
+export default function ScanPage() {
   return (
-    <Suspense fallback={<div>Loading scan…</div>}>
-      <ScanClient />
+    <Suspense fallback={<div className="p-10 text-center">Loading…</div>}>
+      <MaterialDetails />
     </Suspense>
   );
 }
